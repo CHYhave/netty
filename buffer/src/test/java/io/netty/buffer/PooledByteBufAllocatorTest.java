@@ -106,6 +106,20 @@ public class PooledByteBufAllocatorTest extends AbstractByteBufAllocatorTest<Poo
     }
 
     @Test
+    public void testPooledUnsafeHeapBufferAndUnsafeDirectBuffer1() {
+        PooledByteBufAllocator allocator = newAllocator(true);
+        ByteBuf directBuffer = allocator.directBuffer(1024 * 28);
+        assertInstanceOf(directBuffer,
+                PlatformDependent.hasUnsafe() ? PooledUnsafeDirectByteBuf.class : PooledDirectByteBuf.class);
+        directBuffer.release();
+
+        ByteBuf heapBuffer = allocator.heapBuffer();
+        assertInstanceOf(heapBuffer,
+                PlatformDependent.hasUnsafe() ? PooledUnsafeHeapByteBuf.class : PooledHeapByteBuf.class);
+        heapBuffer.release();
+    }
+
+    @Test
     public void testIOBuffersAreDirectWhenUnsafeAvailableOrDirectBuffersPooled() {
         PooledByteBufAllocator allocator = newAllocator(true);
         ByteBuf ioBuffer = allocator.ioBuffer();

@@ -139,10 +139,10 @@ final class PoolChunk<T> implements PoolChunkMetric {
     private static final int SUBPAGE_BIT_LENGTH = 1;
     private static final int BITMAP_IDX_BIT_LENGTH = 32;
 
-    static final int IS_SUBPAGE_SHIFT = BITMAP_IDX_BIT_LENGTH;
-    static final int IS_USED_SHIFT = SUBPAGE_BIT_LENGTH + IS_SUBPAGE_SHIFT;
-    static final int SIZE_SHIFT = INUSED_BIT_LENGTH + IS_USED_SHIFT;
-    static final int RUN_OFFSET_SHIFT = SIZE_BIT_LENGTH + SIZE_SHIFT;
+    static final int IS_SUBPAGE_SHIFT = BITMAP_IDX_BIT_LENGTH; // 32
+    static final int IS_USED_SHIFT = SUBPAGE_BIT_LENGTH + IS_SUBPAGE_SHIFT; // 33
+    static final int SIZE_SHIFT = INUSED_BIT_LENGTH + IS_USED_SHIFT; // 34
+    static final int RUN_OFFSET_SHIFT = SIZE_BIT_LENGTH + SIZE_SHIFT; // 49
 
     final PoolArena<T> arena;
     final Object base;
@@ -196,6 +196,7 @@ final class PoolChunk<T> implements PoolChunkMetric {
         unpooled = false;
         this.arena = arena;
         this.base = base;
+        // memory就是byteBuffer
         this.memory = memory;
         this.pageSize = pageSize;
         this.pageShifts = pageShifts;
@@ -209,6 +210,23 @@ final class PoolChunk<T> implements PoolChunkMetric {
 
         //insert initial run, offset = 0, pages = chunkSize / pageSize
         int pages = chunkSize >> pageShifts;
+        /*
+         * a handle is a long number, the bit layout of a run looks like:
+         *
+         * oooooooo ooooooos ssssssss ssssssue bbbbbbbb bbbbbbbb bbbbbbbb bbbbbbbb
+         *
+         * o: runOffset (page offset in the chunk), 15bit
+         * s: size (number of pages) of this run, 15bit
+         * u: isUsed?, 1bit
+         * e: isSubpage?, 1bit
+         * b: bitmapIdx of subpage, zero if it's not subpage, 32bit
+         */
+        // 初始化的handle
+        // runOffset == 0
+        // size == pageSize
+        // isUsed == 0 false
+        // isSubpage == 0 false
+        // bitmapIdx == 0 不是subpage
         long initHandle = (long) pages << SIZE_SHIFT;
         insertAvailRun(0, pages, initHandle);
 
@@ -239,6 +257,7 @@ final class PoolChunk<T> implements PoolChunkMetric {
         return queueArray;
     }
 
+   //https://www.cnblogs.com/binecy/p/14020932.html
     private void insertAvailRun(int runOffset, int pages, long handle) {
         int pageIdxFloor = arena.pages2pageIdxFloor(pages);
         LongPriorityQueue queue = runsAvail[pageIdxFloor];

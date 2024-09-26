@@ -20,6 +20,11 @@ package io.netty.buffer;
  * PoolChunk}.
  */
 final class LongLongHashMap {
+    // 0000 0000 0000 0000 0000 0000 0000 0001
+    // =>
+    // 1111 1111 1111 1111 1111 1111 1111 1110
+    // ~反码
+    // 确保size
     private static final int MASK_TEMPLATE = ~1;
     private int mask;
     private long[] array;
@@ -126,4 +131,5 @@ final class LongLongHashMap {
         mask = length - 1 & MASK_TEMPLATE;
         maxProbe = (int) Math.log(length);
     }
+
 }

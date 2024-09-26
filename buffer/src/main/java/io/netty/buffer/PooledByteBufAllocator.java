@@ -280,7 +280,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
             pageSize = (int) PlatformDependent.align(pageSize, directMemoryCacheAlignment);
         }
 
-        chunkSize = validateAndCalculateChunkSize(pageSize, maxOrder);
+        chunkSize = validateAndCalculateChunkSize(pageSize, maxOrder); //默认的chunkSize=4MB, maxOrder指的是tree的高度，默认是9，netty是11，所以netty的chunk大小为16MB,倍
 
         checkPositiveOrZero(nHeapArena, "nHeapArena");
         checkPositiveOrZero(nDirectArena, "nDirectArena");
